@@ -26,7 +26,7 @@ impl BloomFilter {
             println!("{} is probably present", s);
         } else {
             for i in self.hashing(s) {
-                self.bit_array.set_bit(i, true)
+                self.bit_array.set(i, true)
             }
             println!("Inserted: {}", s);
         }
