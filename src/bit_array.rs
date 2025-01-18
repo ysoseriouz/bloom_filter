@@ -30,6 +30,9 @@ impl BitArray {
     }
 
     pub fn get_byte_position(&self, bit_index: usize) -> (usize, usize) {
+        if bit_index >= self.bit_size {
+            panic!("Index out of bounds: must less than {}", self.bit_size);
+        }
         let index = bit_index / 8;
         let offset = bit_index % 8;
         (index, offset)
@@ -83,5 +86,21 @@ mod tests {
         println!("{}", bit_array);
         assert!(bit_array[0]);
         assert!(!bit_array[5]);
+    }
+
+    #[test]
+    fn test_out_of_bound_set_panic() {
+        let result = std::panic::catch_unwind(|| {
+            let mut bit_array = BitArray::new(10);
+            bit_array.set(10, true);
+        });
+        assert!(result.is_err())
+    }
+
+    #[test]
+    #[should_panic(expected = "Index out of bounds: must less than 5")]
+    fn test_out_of_bound_get_panic() {
+        let bit_array = BitArray::new(5);
+        assert!(!bit_array[6]);
     }
 }
