@@ -2,5 +2,11 @@
 name = "bloom_filter"
 version = "0.1.0"
 edition = "2021"
+authors = ["ysoseriouz"]
+license = "MIT"
+description = "Simple bloom filter for me or you"
+repository = "https://github.com/ysoseriouz/bloom_filter"
+readme = "README.md"
+keywords = ["dsa"]
 
 [dependencies]
