@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "bloom_filter"
+name = "bloom-filter-yss"
 version = "0.1.0"
