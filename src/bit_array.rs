@@ -2,15 +2,15 @@ use std::ops::Index;
 
 pub struct BitArray {
     byte_array: Vec<u8>,
-    pub bit_size: usize,
+    pub size: usize,
 }
 
 impl BitArray {
-    pub fn new(bit_size: usize) -> Self {
-        let num_bytes = (bit_size + 7) / 8;
+    pub fn new(size: usize) -> Self {
+        let num_bytes = (size + 7) / 8;
         Self {
             byte_array: vec![0; num_bytes],
-            bit_size,
+            size,
         }
     }
 
@@ -30,8 +30,8 @@ impl BitArray {
     }
 
     pub fn get_byte_position(&self, bit_index: usize) -> (usize, usize) {
-        if bit_index >= self.bit_size {
-            panic!("Index out of bounds: must less than {}", self.bit_size);
+        if bit_index >= self.size {
+            panic!("Index out of bounds: must less than {}", self.size);
         }
         let index = bit_index / 8;
         let offset = bit_index % 8;
@@ -56,7 +56,7 @@ impl Index<usize> for BitArray {
 
 impl std::fmt::Display for BitArray {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let mut bits = vec!['0'; self.bit_size];
+        let mut bits = vec!['0'; self.size];
 
         for (index, bit) in bits.iter_mut().enumerate() {
             let (byte_index, bit_offset) = self.get_byte_position(index);

@@ -1,19 +1,22 @@
 use super::bit_array::BitArray;
 
-#[allow(dead_code)]
 pub struct BloomFilter {
-    filter_size: usize,
-    max_items: usize,
     bit_array: BitArray,
+    hash_count: usize,
 }
 
-#[allow(dead_code)]
 impl BloomFilter {
-    pub fn new(filter_size: usize) -> Self {
+    pub fn new(max_items: usize) -> Self {
+        const FALSE_POSITIVE_RATE: f32 = 0.01;
+        let ln_rate = FALSE_POSITIVE_RATE.ln();
+        let ln_2 = 2_f32.ln();
+
+        let size = (-(max_items as f32) * ln_rate / ln_2.powi(2)).ceil() as usize;
+        let hash_count = (-ln_rate / ln_2).ceil() as usize;
+
         Self {
-            filter_size,
-            max_items: 100,
-            bit_array: BitArray::new(filter_size),
+            bit_array: BitArray::new(size),
+            hash_count,
         }
     }
 
@@ -34,10 +37,10 @@ impl BloomFilter {
 
     fn hashing(&self, s: &str) -> Vec<usize> {
         vec![
-            hash1(s, self.filter_size),
-            hash2(s, self.filter_size),
-            hash3(s, self.filter_size),
-            hash4(s, self.filter_size),
+            hash1(s, self.bit_array.size),
+            hash2(s, self.bit_array.size),
+            hash3(s, self.bit_array.size),
+            hash4(s, self.bit_array.size),
         ]
     }
 }
@@ -111,6 +114,7 @@ mod tests {
         assert!(bloom_filter.lookup("abound"));
         assert!(bloom_filter.lookup("abound1"));
         assert!(bloom_filter.lookup("abound2"));
+        assert!(!bloom_filter.lookup("aboundd"));
         assert!(!bloom_filter.lookup("abbound"));
         assert!(!bloom_filter.lookup("dnuoba"));
     }
