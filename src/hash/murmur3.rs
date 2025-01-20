@@ -10,9 +10,9 @@ fn murmur_32_scramble(k: u32) -> u32 {
         .wrapping_mul(0x1b873593)
 }
 
-pub fn murmur3(source: &str, seed: u32) -> u32 {
+pub fn murmur3(data: &[u8], seed: u32) -> u32 {
     let mut hash = seed;
-    let mut bytes = source.as_bytes();
+    let mut bytes = data;
     let mut buffer = [0; BYTE_CHUNK];
     let mut len = 0;
 
@@ -56,19 +56,19 @@ mod tests {
 
     #[test]
     fn test_murmur3() {
-        assert_eq!(murmur3("", 0x00000000), 0x00000000);
-        assert_eq!(murmur3("", 0x00000001), 0x514e28b7);
-        assert_eq!(murmur3("", 0xffffffff), 0x81f16f39);
-        assert_eq!(murmur3("test", 0x00000000), 0xba6bd213);
-        assert_eq!(murmur3("test", 0x9747b28c), 0x704b81dc);
-        assert_eq!(murmur3("Hello, world!", 0x00000000), 0xc0363e43);
-        assert_eq!(murmur3("Hello, world!", 0x9747b28c), 0x24884cba);
+        assert_eq!(murmur3(b"", 0x00000000), 0x00000000);
+        assert_eq!(murmur3(b"", 0x00000001), 0x514e28b7);
+        assert_eq!(murmur3(b"", 0xffffffff), 0x81f16f39);
+        assert_eq!(murmur3(b"test", 0x00000000), 0xba6bd213);
+        assert_eq!(murmur3(b"test", 0x9747b28c), 0x704b81dc);
+        assert_eq!(murmur3(b"Hello, world!", 0x00000000), 0xc0363e43);
+        assert_eq!(murmur3(b"Hello, world!", 0x9747b28c), 0x24884cba);
         assert_eq!(
-            murmur3("The quick brown fox jumps over the lazy dog", 0x00000000),
+            murmur3(b"The quick brown fox jumps over the lazy dog", 0x00000000),
             0x2e4ff723
         );
         assert_eq!(
-            murmur3("The quick brown fox jumps over the lazy dog", 0x9747b28c),
+            murmur3(b"The quick brown fox jumps over the lazy dog", 0x9747b28c),
             0x2fa826cd
         );
     }

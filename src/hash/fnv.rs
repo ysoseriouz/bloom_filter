@@ -5,9 +5,9 @@ const FNV_OFFSET_BASIS: u32 = 0x811c9dc5;
 const FNV_PRIME: u32 = 0x01000193;
 
 // 32-bit FNV-1a
-pub fn fnv(source: &[u8]) -> u32 {
+pub fn fnv(data: &[u8]) -> u32 {
     let mut hash = FNV_OFFSET_BASIS;
-    for &byte in source {
+    for &byte in data {
         hash ^= byte as u32;
         hash = hash.wrapping_mul(FNV_PRIME);
     }
