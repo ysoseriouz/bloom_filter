@@ -1,4 +1,7 @@
 use super::bit_array::BitArray;
+use super::hash::{fnv, murmur3};
+
+const MURMUR3_SEED: u32 = 0xdead_cafe;
 
 pub struct BloomFilter {
     bit_array: BitArray,
@@ -20,83 +23,35 @@ impl BloomFilter {
         }
     }
 
-    pub fn lookup(&self, s: &str) -> bool {
-        self.hashing(s).iter().all(|&i| self.bit_array.get_bit(i))
+    pub fn lookup(&self, key: &str) -> bool {
+        self.hashing(key).iter().all(|&i| self.bit_array.get_bit(i))
     }
 
-    pub fn insert(&mut self, s: &str) {
-        if self.lookup(s) {
-            println!("{} is probably present", s);
+    pub fn insert(&mut self, key: &str) {
+        if self.lookup(key) {
+            println!("{} is probably present", key);
         } else {
-            for i in self.hashing(s) {
+            for i in self.hashing(key) {
                 self.bit_array.set(i, true)
             }
-            println!("Inserted: {}", s);
+            println!("Inserted: {}", key);
         }
     }
 
-    fn hashing(&self, s: &str) -> Vec<usize> {
-        vec![
-            hash1(s, self.bit_array.size),
-            hash2(s, self.bit_array.size),
-            hash3(s, self.bit_array.size),
-            hash4(s, self.bit_array.size),
-        ]
-    }
-}
+    // double-hashing
+    fn hashing(&self, key: &str) -> Vec<usize> {
+        let bitsize = self.bit_array.size;
+        let bytes: &[u8] = key.as_bytes();
+        let h1 = (murmur3(bytes, MURMUR3_SEED) as usize) % bitsize;
+        let h2 = (fnv(bytes) as usize) % bitsize;
+        let mut hash_table = vec![0; self.hash_count];
 
-fn mod_exp(base: usize, exp: usize, modulo: usize) -> usize {
-    let mut result = 1_usize;
-    let mut base = base % modulo;
-    let mut exp = exp;
-
-    while exp > 0 {
-        if exp % 2 == 1 {
-            result = (result * base) % modulo;
+        for (idx, hash_val) in hash_table.iter_mut().enumerate() {
+            *hash_val = (h1 + idx.wrapping_mul(h2)) % bitsize
         }
-        base = (base * base) % modulo;
-        exp /= 2;
-    }
 
-    result
-}
-
-fn hash1(s: &str, size: usize) -> usize {
-    let mut hash = 0;
-    for ch in s.chars() {
-        let ch_val = ch as usize;
-        hash = (hash + ch_val) % size;
+        hash_table
     }
-    hash
-}
-
-fn hash2(s: &str, size: usize) -> usize {
-    let mut hash = 1;
-    for (idx, ch) in s.chars().enumerate() {
-        let power = mod_exp(19, idx, size);
-        let temp = power * (ch as usize) % size;
-        hash = (hash + temp) % size;
-    }
-    hash
-}
-
-fn hash3(s: &str, size: usize) -> usize {
-    let mut hash = 7;
-    for ch in s.chars() {
-        hash = (hash * 31 + (ch as usize)) % size;
-    }
-    hash
-}
-
-fn hash4(s: &str, size: usize) -> usize {
-    let mut hash = 3;
-    let p = 7;
-    let fst_ch_val = s.chars().next().unwrap() as usize;
-    for idx in 0..s.len() {
-        let temp = mod_exp(p, idx, size) * fst_ch_val % size;
-        hash = (hash * p + temp) % size;
-    }
-    hash
 }
 
 #[cfg(test)]
