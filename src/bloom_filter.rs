@@ -27,14 +27,14 @@ impl BloomFilter {
         self.hashing(key).iter().all(|&i| self.bit_array.get_bit(i))
     }
 
-    pub fn insert(&mut self, key: &str) {
+    pub fn insert(&mut self, key: &str) -> bool {
         if self.lookup(key) {
-            println!("{} is probably present", key);
+            false
         } else {
             for i in self.hashing(key) {
                 self.bit_array.set(i, true)
             }
-            println!("Inserted: {}", key);
+            true
         }
     }
 
