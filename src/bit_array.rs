@@ -1,7 +1,7 @@
 use std::ops::Index;
 
 pub struct BitArray {
-    byte_array: Vec<u8>,
+    pub byte_array: Vec<u8>,
     pub size: usize,
 }
 

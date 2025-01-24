@@ -2,15 +2,15 @@ use super::bit_array::BitArray;
 use super::hash::{fnv, murmur3};
 
 const MURMUR3_SEED: u32 = 0xdead_cafe;
+const FALSE_POSITIVE_RATE: f32 = 0.01;
 
 pub struct BloomFilter {
-    bit_array: BitArray,
-    hash_count: usize,
+    pub bit_array: BitArray,
+    pub hash_count: usize,
 }
 
 impl BloomFilter {
     pub fn new(max_items: usize) -> Self {
-        const FALSE_POSITIVE_RATE: f32 = 0.01;
         let ln_rate = FALSE_POSITIVE_RATE.ln();
         let ln_2 = 2_f32.ln();
 
@@ -72,5 +72,13 @@ mod tests {
         assert!(!bloom_filter.lookup("aboundd"));
         assert!(!bloom_filter.lookup("abbound"));
         assert!(!bloom_filter.lookup("dnuoba"));
+    }
+
+    #[test]
+    fn test_bloom_filter_spec() {
+        let bloom_filter = BloomFilter::new(2);
+        assert_eq!(bloom_filter.bit_array.byte_array.len(), 3);
+        assert_eq!(bloom_filter.bit_array.size, 20);
+        assert_eq!(bloom_filter.hash_count, 7);
     }
 }

@@ -1,5 +1,6 @@
 mod bit_array;
+mod bloom_filter;
+mod encoder;
 mod hash;
 
-pub mod bloom_filter;
 pub use bloom_filter::BloomFilter;
