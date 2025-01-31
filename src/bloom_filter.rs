@@ -1,4 +1,5 @@
 use crate::bit_array::BitArray;
+use crate::compressor::lzw;
 use crate::decoder::Decodable;
 use crate::encoder::Encodable;
 use crate::hash::{fnv, murmur3};
@@ -59,15 +60,17 @@ impl BloomFilter {
 
     pub fn to_file(&self, path: &str) {
         let mut file = File::create(path).unwrap();
-        file.write_all(&self.encode()).unwrap();
+        let bytes = lzw::compress(&self.encode());
+        file.write_all(&bytes).unwrap();
     }
 
     pub fn from_file(path: &str) -> Self {
         let mut file = File::open(path).unwrap();
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).unwrap();
+        let bytes = lzw::decompress(&buffer);
 
-        Self::decode(&buffer)
+        Self::decode(&bytes)
     }
 }
 
