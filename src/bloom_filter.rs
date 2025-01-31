@@ -1,7 +1,11 @@
-use crate::bit_array::BitArray;
+mod bit_array;
+mod builder;
+
 use crate::decoder::Decodable;
 use crate::encoder::Encodable;
 use crate::hash::{fnv, murmur3};
+pub use bit_array::BitArray;
+pub use builder::BloomFilterBuilder;
 use std::fs::File;
 use std::io::prelude::*;
 

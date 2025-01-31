@@ -1,7 +1,6 @@
 use super::Encodable;
-use crate::bit_array::BitArray;
+use crate::bloom_filter::{BitArray, BloomFilter, CompressMode};
 use crate::compressor::lzw;
-use crate::{BloomFilter, CompressMode};
 
 impl Encodable for BitArray {
     fn encode(&self) -> Vec<u8> {
@@ -46,7 +45,7 @@ impl Encodable for BloomFilter {
 #[cfg(test)]
 mod encodable {
     mod bit_array {
-        use crate::bit_array::BitArray;
+        use crate::bloom_filter::BitArray;
         use crate::encoder::Encodable;
 
         #[test]

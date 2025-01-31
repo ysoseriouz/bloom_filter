@@ -1,7 +1,6 @@
 use super::Decodable;
-use crate::bit_array::BitArray;
+use crate::bloom_filter::{BitArray, BloomFilter, CompressMode};
 use crate::compressor::lzw;
-use crate::{BloomFilter, CompressMode};
 
 impl Decodable for BitArray {
     fn decode(bytes: &[u8]) -> Self {
@@ -50,7 +49,7 @@ impl Decodable for BloomFilter {
 #[cfg(test)]
 mod decodable {
     mod bit_array {
-        use crate::bit_array::BitArray;
+        use crate::bloom_filter::BitArray;
         use crate::decoder::Decodable;
 
         #[test]
