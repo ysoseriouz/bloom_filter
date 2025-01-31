@@ -1,1 +1,1 @@
-mod lzw;
+pub mod lzw;

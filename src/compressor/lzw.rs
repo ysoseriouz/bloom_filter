@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 type CodeType = u16;
+const CODE_SIZE: usize = 2; // in bytes
 const DMS: usize = CodeType::MAX as usize; // dictionary last
 const INITIAL_CODE: CodeType = CodeType::MAX;
 
-pub fn compress(bytes: &[u8]) -> Vec<CodeType> {
+pub fn compress(bytes: &[u8]) -> Vec<u8> {
     let mut dictionary = compress_dictionary();
-    let mut output: Vec<CodeType> = Vec::new();
+    let mut output: Vec<u8> = Vec::new();
     let mut curr_code = INITIAL_CODE;
 
     for &byte in bytes {
@@ -19,7 +20,7 @@ pub fn compress(bytes: &[u8]) -> Vec<CodeType> {
                 curr_code = code;
             }
             None => {
-                output.push(curr_code);
+                output.extend_from_slice(&curr_code.to_be_bytes());
                 let next_code = dictionary.len() as CodeType;
                 dictionary.insert((curr_code, byte), next_code);
                 curr_code = *dictionary.get(&(INITIAL_CODE, byte)).unwrap();
@@ -27,18 +28,19 @@ pub fn compress(bytes: &[u8]) -> Vec<CodeType> {
         }
     }
     if curr_code != INITIAL_CODE {
-        output.push(curr_code);
+        output.extend_from_slice(&curr_code.to_be_bytes());
     }
 
     output
 }
 
-pub fn decompress(encoded: &[CodeType]) -> Vec<u8> {
+pub fn decompress(bytes: &[u8]) -> Vec<u8> {
     let mut output = Vec::new();
     let mut dictionary = decompress_dictionary();
     let mut prev_code = INITIAL_CODE;
 
-    for &curr_code in encoded {
+    for code in bytes.chunks_exact(CODE_SIZE) {
+        let curr_code = CodeType::from_be_bytes([code[0], code[1]]);
         let dict_len = dictionary.len();
         let code_usize = curr_code as usize;
 
