@@ -1,14 +1,12 @@
 use super::Encodable;
 use crate::bit_array::BitArray;
-use crate::BloomFilter;
+use crate::compressor::lzw;
+use crate::{BloomFilter, CompressMode};
 
 impl Encodable for BitArray {
-    fn byte_size(&self) -> usize {
-        8 + self.byte_array.len() + 8
-    }
-
     fn encode(&self) -> Vec<u8> {
-        let mut encoded = Vec::with_capacity(self.byte_size());
+        let byte_size = 8 + self.byte_array.len() + 8;
+        let mut encoded = Vec::with_capacity(byte_size);
 
         encoded.extend_from_slice(&(self.byte_array.len() as u64).to_be_bytes());
         encoded.extend_from_slice(&self.byte_array);
@@ -18,16 +16,28 @@ impl Encodable for BitArray {
     }
 }
 
-impl Encodable for BloomFilter {
-    fn byte_size(&self) -> usize {
-        self.bit_array.byte_size() + 8
-    }
-
+impl Encodable for CompressMode {
     fn encode(&self) -> Vec<u8> {
-        let mut encoded = Vec::with_capacity(self.byte_size());
+        match self {
+            CompressMode::Lzw => vec![1],
+            _ => vec![0],
+        }
+    }
+}
 
-        encoded.extend_from_slice(&self.bit_array.encode());
+impl Encodable for BloomFilter {
+    fn encode(&self) -> Vec<u8> {
+        let encoded_bit_array = self.bit_array.encode();
+        let compressed_bit_array = match self.compress_mode {
+            CompressMode::Lzw => lzw::compress(&encoded_bit_array),
+            _ => encoded_bit_array,
+        };
+
+        let byte_size = compressed_bit_array.len() + 8 + 1;
+        let mut encoded = Vec::with_capacity(byte_size);
+        encoded.extend_from_slice(&compressed_bit_array);
         encoded.extend_from_slice(&(self.hash_count as u64).to_be_bytes());
+        encoded.extend_from_slice(&self.compress_mode.encode());
 
         encoded
     }
@@ -38,12 +48,6 @@ mod encodable {
     mod bit_array {
         use crate::bit_array::BitArray;
         use crate::encoder::Encodable;
-
-        #[test]
-        fn test_byte_size() {
-            let bit_array = BitArray::new(10);
-            assert_eq!(bit_array.byte_size(), 18);
-        }
 
         #[test]
         fn test_encode() {
@@ -75,12 +79,6 @@ mod encodable {
         use crate::BloomFilter;
 
         #[test]
-        fn test_byte_size() {
-            let bloom_filter = BloomFilter::new(2);
-            assert_eq!(bloom_filter.byte_size(), 8 + 3 + 8 + 8);
-        }
-
-        #[test]
         fn test_encode() {
             let mut bloom_filter = BloomFilter::new(2);
             assert_eq!(
@@ -90,6 +88,7 @@ mod encodable {
                     0, 0, 0, // BitArray: byte data
                     0, 0, 0, 0, 0, 0, 0, 20, // BitArray: bin size
                     0, 0, 0, 0, 0, 0, 0, 7, // Number of hash functions
+                    0,
                 ]
             );
 
@@ -101,6 +100,7 @@ mod encodable {
                     0b10000100, 0b00100001, 0, // BitArray: byte data
                     0, 0, 0, 0, 0, 0, 0, 20, // BitArray: bin size
                     0, 0, 0, 0, 0, 0, 0, 7, // Number of hash functions
+                    0,
                 ]
             );
         }

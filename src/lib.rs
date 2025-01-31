@@ -5,4 +5,4 @@ mod decoder;
 mod encoder;
 mod hash;
 
-pub use bloom_filter::BloomFilter;
+pub use bloom_filter::{BloomFilter, CompressMode};

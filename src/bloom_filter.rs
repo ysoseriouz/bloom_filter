@@ -1,5 +1,4 @@
 use crate::bit_array::BitArray;
-use crate::compressor::lzw;
 use crate::decoder::Decodable;
 use crate::encoder::Encodable;
 use crate::hash::{fnv, murmur3};
@@ -9,9 +8,16 @@ use std::io::prelude::*;
 const MURMUR3_SEED: u32 = 0xdead_cafe;
 const FALSE_POSITIVE_RATE: f32 = 0.01;
 
+#[derive(Debug, PartialEq)]
+pub enum CompressMode {
+    None,
+    Lzw,
+}
+
 pub struct BloomFilter {
     pub bit_array: BitArray,
     pub hash_count: usize,
+    pub compress_mode: CompressMode,
 }
 
 impl BloomFilter {
@@ -25,6 +31,7 @@ impl BloomFilter {
         Self {
             bit_array: BitArray::new(size),
             hash_count,
+            compress_mode: CompressMode::None,
         }
     }
 
@@ -60,17 +67,15 @@ impl BloomFilter {
 
     pub fn to_file(&self, path: &str) {
         let mut file = File::create(path).unwrap();
-        let bytes = lzw::compress(&self.encode());
-        file.write_all(&bytes).unwrap();
+        file.write_all(&self.encode()).unwrap();
     }
 
     pub fn from_file(path: &str) -> Self {
         let mut file = File::open(path).unwrap();
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).unwrap();
-        let bytes = lzw::decompress(&buffer);
 
-        Self::decode(&bytes)
+        Self::decode(&buffer)
     }
 }
 
@@ -110,6 +115,7 @@ mod tests {
         assert_eq!(bloom_filter.bit_array.byte_array.len(), 3);
         assert_eq!(bloom_filter.bit_array.size, 20);
         assert_eq!(bloom_filter.hash_count, 7);
+        assert_eq!(bloom_filter.compress_mode, CompressMode::None);
     }
 
     #[test]

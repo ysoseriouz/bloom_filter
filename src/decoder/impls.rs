@@ -1,6 +1,7 @@
 use super::Decodable;
 use crate::bit_array::BitArray;
-use crate::BloomFilter;
+use crate::compressor::lzw;
+use crate::{BloomFilter, CompressMode};
 
 impl Decodable for BitArray {
     fn decode(bytes: &[u8]) -> Self {
@@ -17,17 +18,31 @@ impl Decodable for BitArray {
     }
 }
 
+impl Decodable for CompressMode {
+    fn decode(bytes: &[u8]) -> Self {
+        match bytes[0] {
+            1 => Self::Lzw,
+            _ => Self::None,
+        }
+    }
+}
+
 impl Decodable for BloomFilter {
     fn decode(bytes: &[u8]) -> Self {
-        let split_idx = bytes.len() - 8;
-        let buffer = &bytes[..split_idx];
-        let bit_array = BitArray::decode(buffer);
-        let buffer = &bytes[split_idx..];
+        let split_idx = bytes.len() - 9;
+        let bit_array_buffer = &bytes[..split_idx];
+        let buffer = &bytes[split_idx..(bytes.len() - 1)];
         let hash_count = u64::from_be_bytes(buffer.try_into().unwrap()) as usize;
+        let compress_mode = CompressMode::decode(&[*bytes.last().unwrap()]);
+        let decompressed_bit_array = match compress_mode {
+            CompressMode::Lzw => &lzw::decompress(bit_array_buffer),
+            _ => bit_array_buffer,
+        };
 
         Self {
-            bit_array,
+            bit_array: BitArray::decode(decompressed_bit_array),
             hash_count,
+            compress_mode,
         }
     }
 }
@@ -55,7 +70,7 @@ mod decodable {
 
     mod bloom_filter {
         use crate::decoder::Decodable;
-        use crate::BloomFilter;
+        use crate::{BloomFilter, CompressMode};
 
         #[test]
         fn test_decode() {
@@ -64,11 +79,13 @@ mod decodable {
                 0b10000100, 0b00100001, 0, // BitArray: byte data
                 0, 0, 0, 0, 0, 0, 0, 20, // BitArray: bin size
                 0, 0, 0, 0, 0, 0, 0, 7, // Number of hash functions
+                0, // Compress mode
             ];
             let bloom_filter = BloomFilter::decode(&encoded);
             assert_eq!(bloom_filter.bit_array.byte_array.len(), 3);
             assert_eq!(bloom_filter.bit_array.size, 20);
             assert_eq!(bloom_filter.hash_count, 7);
+            assert_eq!(bloom_filter.compress_mode, CompressMode::None);
             assert!(bloom_filter.lookup("test"));
             assert!(!bloom_filter.lookup("test1"));
         }
