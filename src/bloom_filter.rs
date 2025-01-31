@@ -1,16 +1,27 @@
-use crate::bit_array::BitArray;
+mod bit_array;
+mod builder;
+
 use crate::decoder::Decodable;
 use crate::encoder::Encodable;
 use crate::hash::{fnv, murmur3};
+pub use bit_array::BitArray;
+pub use builder::BloomFilterBuilder;
 use std::fs::File;
 use std::io::prelude::*;
 
 const MURMUR3_SEED: u32 = 0xdead_cafe;
 const FALSE_POSITIVE_RATE: f32 = 0.01;
 
+#[derive(Debug, PartialEq)]
+pub enum CompressMode {
+    None,
+    Lzw,
+}
+
 pub struct BloomFilter {
     pub bit_array: BitArray,
     pub hash_count: usize,
+    pub compress_mode: CompressMode,
 }
 
 impl BloomFilter {
@@ -24,6 +35,7 @@ impl BloomFilter {
         Self {
             bit_array: BitArray::new(size),
             hash_count,
+            compress_mode: CompressMode::None,
         }
     }
 
@@ -107,6 +119,7 @@ mod tests {
         assert_eq!(bloom_filter.bit_array.byte_array.len(), 3);
         assert_eq!(bloom_filter.bit_array.size, 20);
         assert_eq!(bloom_filter.hash_count, 7);
+        assert_eq!(bloom_filter.compress_mode, CompressMode::None);
     }
 
     #[test]
