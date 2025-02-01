@@ -15,7 +15,7 @@ fn main() {
     bloom_filter.insert("test1");
     bloom_filter.to_file(local_path);
 
-    let bloom_filter = BloomFilterBuilder::load(local_path);
+    let bloom_filter = BloomFilterBuilder::load(local_path).unwrap();
     lookup(&bloom_filter, "test");
     lookup(&bloom_filter, "test1");
     lookup(&bloom_filter, "test2");

@@ -8,6 +8,7 @@ pub use bit_array::BitArray;
 pub use builder::BloomFilterBuilder;
 use std::fs::File;
 use std::io::prelude::*;
+use anyhow::Result;
 
 const MURMUR3_SEED: u32 = 0xdead_cafe;
 const FALSE_POSITIVE_RATE: f32 = 0.01;
@@ -74,10 +75,10 @@ impl BloomFilter {
         file.write_all(&self.encode()).unwrap();
     }
 
-    pub fn from_file(path: &str) -> Self {
-        let mut file = File::open(path).unwrap();
+    pub fn from_file(path: &str) -> Result<Self> {
+        let mut file = File::open(path)?;
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer).unwrap();
+        file.read_to_end(&mut buffer)?;
 
         Self::decode(&buffer)
     }
@@ -131,7 +132,7 @@ mod tests {
         // Test no data
         bloom_filter.to_file(test_file);
         assert!(Path::new(test_file).exists());
-        let mut bloom_filter = BloomFilterBuilder::load(test_file);
+        let mut bloom_filter = BloomFilterBuilder::load(test_file).unwrap();
         assert!(!bloom_filter.lookup("test"));
         assert!(!bloom_filter.lookup("test1"));
 
@@ -139,7 +140,7 @@ mod tests {
         bloom_filter.insert("test");
         bloom_filter.to_file(test_file);
         assert!(Path::new(test_file).exists());
-        let bloom_filter = BloomFilterBuilder::load(test_file);
+        let bloom_filter = BloomFilterBuilder::load(test_file).unwrap();
         assert!(bloom_filter.lookup("test"));
         assert!(!bloom_filter.lookup("test1"));
 
