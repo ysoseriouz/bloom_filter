@@ -1,3 +1,5 @@
+// ref: https://www2.cs.duke.edu/csed/curious/compression/lzw.html
+
 use std::collections::HashMap;
 
 type CodeType = u16;
@@ -73,7 +75,7 @@ pub fn decompress(bytes: &[u8]) -> Vec<u8> {
 
 fn compress_dictionary() -> HashMap<(CodeType, u8), CodeType> {
     let mut dictionary = HashMap::with_capacity(DMS);
-    for (i, c) in (u8::MIN..u8::MAX).enumerate() {
+    for (i, c) in (u8::MIN..=u8::MAX).enumerate() {
         dictionary.insert((INITIAL_CODE, c), i as CodeType);
     }
     dictionary
@@ -81,7 +83,7 @@ fn compress_dictionary() -> HashMap<(CodeType, u8), CodeType> {
 
 fn decompress_dictionary() -> Vec<(CodeType, u8)> {
     let mut dictionary = Vec::with_capacity(DMS);
-    for c in u8::MIN..u8::MAX {
+    for c in u8::MIN..=u8::MAX {
         dictionary.push((INITIAL_CODE, c));
     }
     dictionary
@@ -118,5 +120,6 @@ mod tests {
         assert_compression(b"abababab");
         assert_compression(b"ababbbab");
         assert_compression(b"");
+        assert_compression(&[0b00000000, 0b11111111]);
     }
 }

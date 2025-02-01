@@ -99,7 +99,7 @@ mod tests {
 
     #[test]
     fn test_bloom_filter() {
-        let mut bloom_filter = BloomFilter::new(100);
+        let mut bloom_filter = BloomFilterBuilder::new(100).build();
         bloom_filter.insert("abound");
         bloom_filter.insert("abound1");
         bloom_filter.insert("abound2");
@@ -115,23 +115,23 @@ mod tests {
 
     #[test]
     fn test_bloom_filter_spec() {
-        let bloom_filter = BloomFilter::new(2);
+        let bloom_filter = BloomFilterBuilder::new(2).build();
         assert_eq!(bloom_filter.bit_array.byte_array.len(), 3);
         assert_eq!(bloom_filter.bit_array.size, 20);
         assert_eq!(bloom_filter.hash_count, 7);
-        assert_eq!(bloom_filter.compress_mode, CompressMode::None);
+        assert_eq!(bloom_filter.compress_mode, CompressMode::Lzw);
     }
 
     #[test]
     fn test_persist_local_file() {
         prepare_tmp_dir();
         let test_file = "tmp/bloom_filter_test_persist_local_file.bin";
-        let bloom_filter = BloomFilter::new(2);
+        let bloom_filter = BloomFilterBuilder::new(2).build();
 
         // Test no data
         bloom_filter.to_file(test_file);
         assert!(Path::new(test_file).exists());
-        let mut bloom_filter = BloomFilter::from_file(test_file);
+        let mut bloom_filter = BloomFilterBuilder::load(test_file);
         assert!(!bloom_filter.lookup("test"));
         assert!(!bloom_filter.lookup("test1"));
 
@@ -139,7 +139,7 @@ mod tests {
         bloom_filter.insert("test");
         bloom_filter.to_file(test_file);
         assert!(Path::new(test_file).exists());
-        let bloom_filter = BloomFilter::from_file(test_file);
+        let bloom_filter = BloomFilterBuilder::load(test_file);
         assert!(bloom_filter.lookup("test"));
         assert!(!bloom_filter.lookup("test1"));
 
