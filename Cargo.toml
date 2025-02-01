@@ -10,3 +10,5 @@ readme = "README.md"
 keywords = ["dsa"]
 
 [dependencies]
+anyhow = "1.0.95"
+thiserror = "2.0.11"

@@ -1,4 +1,5 @@
 use super::{BloomFilter, CompressMode};
+use anyhow::Result;
 
 pub struct BloomFilterBuilder {
     bloom_filter: BloomFilter,
@@ -21,7 +22,7 @@ impl BloomFilterBuilder {
         self.bloom_filter
     }
 
-    pub fn load(path: &str) -> BloomFilter {
+    pub fn load(path: &str) -> Result<BloomFilter> {
         BloomFilter::from_file(path)
     }
 }
