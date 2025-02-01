@@ -74,12 +74,13 @@ mod encodable {
     }
 
     mod bloom_filter {
+        use crate::compressor::lzw;
         use crate::encoder::Encodable;
-        use crate::BloomFilter;
+        use crate::BloomFilterBuilder;
 
         #[test]
-        fn test_encode() {
-            let mut bloom_filter = BloomFilter::new(2);
+        fn test_encode_without_compression() {
+            let mut bloom_filter = BloomFilterBuilder::new(2).no_compress().build();
             assert_eq!(
                 bloom_filter.encode(),
                 vec![
@@ -102,6 +103,17 @@ mod encodable {
                     0,
                 ]
             );
+        }
+
+        #[test]
+        fn test_encode_with_lzw() {
+            let bloom_filter = BloomFilterBuilder::new(2).build();
+            let mut encoded = lzw::compress(&bloom_filter.bit_array.encode());
+            encoded.extend([
+                0, 0, 0, 0, 0, 0, 0, 7, // Number of hash functions
+                1,
+            ]);
+            assert_eq!(bloom_filter.encode(), encoded);
         }
     }
 }

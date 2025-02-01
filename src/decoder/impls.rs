@@ -68,11 +68,12 @@ mod decodable {
     }
 
     mod bloom_filter {
+        use crate::compressor::lzw;
         use crate::decoder::Decodable;
         use crate::{BloomFilter, CompressMode};
 
         #[test]
-        fn test_decode() {
+        fn test_decode_without_compression() {
             let encoded = vec![
                 0, 0, 0, 0, 0, 0, 0, 3, // BitArray: byte size
                 0b10000100, 0b00100001, 0, // BitArray: byte data
@@ -85,6 +86,28 @@ mod decodable {
             assert_eq!(bloom_filter.bit_array.size, 20);
             assert_eq!(bloom_filter.hash_count, 7);
             assert_eq!(bloom_filter.compress_mode, CompressMode::None);
+            assert!(bloom_filter.lookup("test"));
+            assert!(!bloom_filter.lookup("test1"));
+        }
+
+        #[test]
+        fn test_decode_with_lzw() {
+            let encoded_bit_array = vec![
+                0, 0, 0, 0, 0, 0, 0, 3, // BitArray: byte size
+                0b10000100, 0b00100001, 0, // BitArray: byte data
+                0, 0, 0, 0, 0, 0, 0, 20, // BitArray: bin size
+            ];
+            let mut encoded = lzw::compress(&encoded_bit_array);
+            encoded.extend([
+                0, 0, 0, 0, 0, 0, 0, 7, // Number of hash functions
+                1, // Compress mode
+            ]);
+
+            let bloom_filter = BloomFilter::decode(&encoded);
+            assert_eq!(bloom_filter.bit_array.byte_array.len(), 3);
+            assert_eq!(bloom_filter.bit_array.size, 20);
+            assert_eq!(bloom_filter.hash_count, 7);
+            assert_eq!(bloom_filter.compress_mode, CompressMode::Lzw);
             assert!(bloom_filter.lookup("test"));
             assert!(!bloom_filter.lookup("test1"));
         }
