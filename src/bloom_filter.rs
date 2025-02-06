@@ -4,21 +4,22 @@ mod builder;
 use crate::decoder::Decodable;
 use crate::encoder::Encodable;
 use crate::hash::{fnv, murmur3};
+use anyhow::Result;
 pub use bit_array::BitArray;
 pub use builder::BloomFilterBuilder;
 use std::fs::File;
 use std::io::prelude::*;
-use anyhow::Result;
 
 const MURMUR3_SEED: u32 = 0xdead_cafe;
 const FALSE_POSITIVE_RATE: f32 = 0.01;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum CompressMode {
     None,
     Lzw,
 }
 
+#[derive(Clone)]
 pub struct BloomFilter {
     pub bit_array: BitArray,
     pub hash_count: usize,

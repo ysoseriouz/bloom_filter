@@ -1,5 +1,6 @@
 use std::ops::Index;
 
+#[derive(Clone)]
 pub struct BitArray {
     pub byte_array: Vec<u8>,
     pub size: usize,
